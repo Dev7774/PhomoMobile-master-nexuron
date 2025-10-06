@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "api": {
+      "PhomoAPI": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    },
+    "storage": {
+      "PhomoPhotos": [
+        "read"
+      ]
+    }
+  },
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "faceCollection",
+      "environmentVariableName": "FACE_COLLECTION"
+    },
+    {
+      "cloudFormationParameterName": "appsyncApiId",
+      "environmentVariableName": "APPSYNC_API_ID"
+    }
+  ]
+}

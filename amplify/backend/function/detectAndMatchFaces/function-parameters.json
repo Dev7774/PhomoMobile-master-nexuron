@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "api": {
+      "PhomoAPI": [
+        "Query",
+        "Mutation",
+        "Subscription"
+      ]
+    },
+    "storage": {
+      "PhomoPhotos": [
+        "read",
+        "update"
+      ]
+    }
+  },
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "faceCollection",
+      "environmentVariableName": "FACE_COLLECTION"
+    }
+  ]
+}

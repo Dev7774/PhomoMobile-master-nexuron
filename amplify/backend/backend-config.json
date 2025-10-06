@@ -1,0 +1,409 @@
+{
+  "api": {
+    "PhomoAPI": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "UserPoolId"
+          ],
+          "category": "auth",
+          "resourceName": "phomo314af1f6"
+        }
+      ],
+      "output": {
+        "authConfig": {
+          "additionalAuthenticationProviders": [
+            {
+              "apiKeyConfig": {
+                "apiKeyExpirationDate": "2026-07-01T04:23:33.047Z",
+                "apiKeyExpirationDays": 365,
+                "description": "PhomoAPI Key"
+              },
+              "authenticationType": "API_KEY"
+            },
+            {
+              "authenticationType": "AWS_IAM"
+            }
+          ],
+          "defaultAuthentication": {
+            "authenticationType": "AMAZON_COGNITO_USER_POOLS",
+            "userPoolConfig": {
+              "userPoolId": "authphomo314af1f6"
+            }
+          }
+        }
+      },
+      "providerPlugin": "awscloudformation",
+      "service": "AppSync"
+    }
+  },
+  "auth": {
+    "phomo314af1f6": {
+      "customAuth": false,
+      "dependsOn": [],
+      "frontendAuthConfig": {
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyCharacters": [],
+          "passwordPolicyMinLength": 8
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [
+          "APPLE"
+        ],
+        "usernameAttributes": [],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito"
+    }
+  },
+  "function": {
+    "acceptCameraInvite": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "PhomoAPI"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "createUserFace": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "PhomoAPI"
+        },
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "PhomoPhotos"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "deleteUserFace": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "PhomoAPI"
+        },
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "PhomoPhotos"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "detectAndMatchFaces": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "PhomoAPI"
+        },
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "PhomoPhotos"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "generateCameraInvite": {
+      "build": true,
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
+    "updateUserFace": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "PhomoAPI"
+        },
+        {
+          "attributes": [
+            "BucketName"
+          ],
+          "category": "storage",
+          "resourceName": "PhomoPhotos"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_analytics_Pinpoint_Id": {
+      "usedBy": [
+        {
+          "category": "analytics",
+          "resourceName": "Pinpoint"
+        }
+      ]
+    },
+    "AMPLIFY_analytics_Pinpoint_Name": {
+      "usedBy": [
+        {
+          "category": "analytics",
+          "resourceName": "Pinpoint"
+        }
+      ]
+    },
+    "AMPLIFY_analytics_Pinpoint_Region": {
+      "usedBy": [
+        {
+          "category": "analytics",
+          "resourceName": "Pinpoint"
+        }
+      ]
+    },
+    "AMPLIFY_function_acceptCameraInvite_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "acceptCameraInvite"
+        }
+      ]
+    },
+    "AMPLIFY_function_acceptCameraInvite_jwtSecret": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "acceptCameraInvite"
+        }
+      ]
+    },
+    "AMPLIFY_function_acceptCameraInvite_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "acceptCameraInvite"
+        }
+      ]
+    },
+    "AMPLIFY_function_createUserFace_appsyncApiId": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "createUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_createUserFace_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "createUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_createUserFace_faceCollection": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "createUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_createUserFace_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "createUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_deleteUserFace_authPhomoauthUserpoolid": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "deleteUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_deleteUserFace_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "deleteUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_deleteUserFace_faceCollection": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "deleteUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_deleteUserFace_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "deleteUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_detectAndMatchFaces_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "detectAndMatchFaces"
+        }
+      ]
+    },
+    "AMPLIFY_function_detectAndMatchFaces_faceCollection": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "detectAndMatchFaces"
+        }
+      ]
+    },
+    "AMPLIFY_function_detectAndMatchFaces_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "detectAndMatchFaces"
+        }
+      ]
+    },
+    "AMPLIFY_function_generateCameraInvite_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "generateCameraInvite"
+        }
+      ]
+    },
+    "AMPLIFY_function_generateCameraInvite_inviteExpiryDays": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "generateCameraInvite"
+        }
+      ]
+    },
+    "AMPLIFY_function_generateCameraInvite_jwtSecret": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "generateCameraInvite"
+        }
+      ]
+    },
+    "AMPLIFY_function_generateCameraInvite_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "generateCameraInvite"
+        }
+      ]
+    },
+    "AMPLIFY_function_updateUserFace_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "updateUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_updateUserFace_faceCollection": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "updateUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_function_updateUserFace_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "updateUserFace"
+        }
+      ]
+    },
+    "AMPLIFY_notifications_Pinpoint_Id": {
+      "usedBy": [
+        {
+          "category": "notifications",
+          "resourceName": "Pinpoint"
+        }
+      ]
+    },
+    "AMPLIFY_notifications_Pinpoint_Name": {
+      "usedBy": [
+        {
+          "category": "notifications",
+          "resourceName": "Pinpoint"
+        }
+      ]
+    },
+    "AMPLIFY_notifications_Pinpoint_Region": {
+      "usedBy": [
+        {
+          "category": "notifications",
+          "resourceName": "Pinpoint"
+        }
+      ]
+    }
+  },
+  "storage": {
+    "PhomoPhotos": {
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "S3"
+    }
+  }
+}

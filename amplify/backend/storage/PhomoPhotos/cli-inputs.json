@@ -1,0 +1,14 @@
+{
+  "resourceName": "PhomoPhotos",
+  "policyUUID": "6b7cbdb9",
+  "bucketName": "phomo",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}

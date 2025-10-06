@@ -1,0 +1,24 @@
+[
+  {
+    "Effect": "Allow",
+    "Action": [
+      "rekognition:DeleteUser",
+      "rekognition:ListFaces", 
+      "rekognition:DeleteFaces",
+      "rekognition:DisassociateFaces"
+    ],
+    "Resource": ["*"]
+  },
+  {
+    "Effect": "Allow",
+    "Action": ["appsync:GraphQL"],
+    "Resource": [
+      "arn:aws:appsync:*:*:apis/bue3ljxzwzhpbn2fzc6ddc4wxy/*"
+    ]
+  },
+  {
+    "Effect": "Allow",
+    "Action": ["cognito-idp:AdminDisableUser"],
+    "Resource": ["*"]
+  }
+]

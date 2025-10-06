@@ -1,0 +1,18 @@
+[
+  {
+    "Effect": "Allow",
+    "Action": [
+      "rekognition:CreateUser",
+      "rekognition:AssociateFaces",
+      "rekognition:IndexFaces"
+    ],
+    "Resource": ["*"]
+  },
+  {
+    "Effect": "Allow",
+    "Action": ["appsync:GraphQL"],
+    "Resource": [
+      "arn:aws:appsync:*:*:apis/bue3ljxzwzhpbn2fzc6ddc4wxy/*"
+    ]
+  }
+]

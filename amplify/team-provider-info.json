@@ -1,0 +1,128 @@
+{
+  "prod": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-phomo-prod-60be8-authRole",
+      "UnauthRoleArn": "arn:aws:iam::948676469219:role/amplify-phomo-prod-60be8-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::948676469219:role/amplify-phomo-prod-60be8-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-phomo-prod-60be8-deployment",
+      "UnauthRoleName": "amplify-phomo-prod-60be8-unauthRole",
+      "StackName": "amplify-phomo-prod-60be8",
+      "StackId": "arn:aws:cloudformation:us-east-1:948676469219:stack/amplify-phomo-prod-60be8/a2b77b70-5e00-11f0-adb4-1276d5850013",
+      "AmplifyAppId": "dnep2iqqbocc2"
+    },
+    "categories": {
+      "api": {
+        "PhomoAPI": {}
+      },
+      "function": {
+        "createUserFace": {
+          "deploymentBucketName": "amplify-phomo-prod-60be8-deployment",
+          "s3Key": "amplify-builds/createUserFace-69534c73737a35554566-build.zip",
+          "faceCollection": "phomo_facial_rekognition_collection_PROD",
+          "appsyncApiId": "p4snfgowybawxkrkcyb4p6z5g4"
+        },
+        "detectAndMatchFaces": {
+          "deploymentBucketName": "amplify-phomo-prod-60be8-deployment",
+          "s3Key": "amplify-builds/detectAndMatchFaces-78536331765463373934-build.zip",
+          "faceCollection": "phomo_facial_rekognition_collection_PROD"
+        },
+        "updateUserFace": {
+          "deploymentBucketName": "amplify-phomo-prod-60be8-deployment",
+          "s3Key": "amplify-builds/updateUserFace-656c414f554b70674434-build.zip",
+          "faceCollection": "phomo_facial_rekognition_collection_PROD"
+        },
+        "acceptCameraInvite": {
+          "jwtSecret": "d+1DEDu7DfRW5qvOaGdUmr3mVx8a2g4OeSbBV9JDMOY=",
+          "deploymentBucketName": "amplify-phomo-prod-60be8-deployment",
+          "s3Key": "amplify-builds/acceptCameraInvite-3769366b59386a766262-build.zip"
+        },
+        "generateCameraInvite": {
+          "jwtSecret": "d+1DEDu7DfRW5qvOaGdUmr3mVx8a2g4OeSbBV9JDMOY=",
+          "inviteExpiryDays": "1",
+          "deploymentBucketName": "amplify-phomo-prod-60be8-deployment",
+          "s3Key": "amplify-builds/generateCameraInvite-74427a33524e626e6d78-build.zip"
+        }
+      },
+      "auth": {
+        "phomo314af1f6": {}
+      },
+      "storage": {
+        "PhomoPhotos": {}
+      }
+    }
+  },
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-phomo-dev-17d3c-authRole",
+      "UnauthRoleArn": "arn:aws:iam::948676469219:role/amplify-phomo-dev-17d3c-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::948676469219:role/amplify-phomo-dev-17d3c-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-phomo-dev-17d3c-deployment",
+      "UnauthRoleName": "amplify-phomo-dev-17d3c-unauthRole",
+      "StackName": "amplify-phomo-dev-17d3c",
+      "StackId": "arn:aws:cloudformation:us-east-1:948676469219:stack/amplify-phomo-dev-17d3c/ebc297f0-5626-11f0-a6e9-126b61400cfb",
+      "AmplifyAppId": "dnep2iqqbocc2"
+    },
+    "categories": {
+      "api": {
+        "PhomoAPI": {}
+      },
+      "analytics": {
+        "Pinpoint": {
+          "Id": "b6c097c7ccf048c6b0fb5523e0f76a95",
+          "Name": "phomo-dev",
+          "Region": "us-east-1"
+        }
+      },
+      "function": {
+        "createUserFace": {
+          "appsyncApiId": "bue3ljxzwzhpbn2fzc6ddc4wxy",
+          "faceCollection": "phomo_facial_rekognition_collection",
+          "deploymentBucketName": "amplify-phomo-dev-17d3c-deployment",
+          "s3Key": "amplify-builds/createUserFace-69534c73737a35554566-build.zip"
+        },
+        "detectAndMatchFaces": {
+          "faceCollection": "phomo_facial_rekognition_collection",
+          "deploymentBucketName": "amplify-phomo-dev-17d3c-deployment",
+          "s3Key": "amplify-builds/detectAndMatchFaces-78536331765463373934-build.zip"
+        },
+        "updateUserFace": {
+          "faceCollection": "phomo_facial_rekognition_collection",
+          "deploymentBucketName": "amplify-phomo-dev-17d3c-deployment",
+          "s3Key": "amplify-builds/updateUserFace-656c414f554b70674434-build.zip"
+        },
+        "generateCameraInvite": {
+          "jwtSecret": "Nwgu7lrzG+gI6InraYok4QEeC3gSSbDCxIuF47YaB0o=",
+          "inviteExpiryDays": "7",
+          "deploymentBucketName": "amplify-phomo-dev-17d3c-deployment",
+          "s3Key": "amplify-builds/generateCameraInvite-74427a33524e626e6d78-build.zip"
+        },
+        "acceptCameraInvite": {
+          "jwtSecret": "Nwgu7lrzG+gI6InraYok4QEeC3gSSbDCxIuF47YaB0o=",
+          "deploymentBucketName": "amplify-phomo-dev-17d3c-deployment",
+          "s3Key": "amplify-builds/acceptCameraInvite-3769366b59386a766262-build.zip"
+        },
+        "deleteUserFace": {
+          "deploymentBucketName": "amplify-phomo-dev-17d3c-deployment",
+          "s3Key": "amplify-builds/deleteUserFace-66766d544a4179477465-build.zip",
+          "faceCollection": "phomo_facial_rekognition_collection",
+          "authPhomoauthUserpoolid": "us-east-1_XLeXcI6wO"
+        }
+      },
+      "notifications": {
+        "Pinpoint": {
+          "Id": "b6c097c7ccf048c6b0fb5523e0f76a95",
+          "Name": "phomo-dev",
+          "Region": "us-east-1"
+        }
+      },
+      "auth": {
+        "phomo314af1f6": {}
+      },
+      "storage": {
+        "PhomoPhotos": {}
+      }
+    }
+  }
+}

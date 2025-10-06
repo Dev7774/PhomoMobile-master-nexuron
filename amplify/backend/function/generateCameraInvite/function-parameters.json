@@ -1,0 +1,13 @@
+{
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "jwtSecret",
+      "environmentVariableName": "JWT_SECRET"
+    },
+    {
+      "cloudFormationParameterName": "inviteExpiryDays",
+      "environmentVariableName": "INVITE_EXPIRY_DAYS"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "api": {
+      "PhomoAPI": [
+        "Query",
+        "Mutation"
+      ]
+    }
+  },
+  "lambdaLayers": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "jwtSecret",
+      "environmentVariableName": "JWT_SECRET"
+    }
+  ]
+}
