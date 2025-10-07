@@ -109,7 +109,7 @@ const getSplashIcon = (isDark: boolean) => {
       try {
         return isDark 
           ? require("../assets/images/splash-icon-dark.png")
-          : require("../assets/images/splash-icon-light.png");
+          : require("../assets/images/icon_copy.png");
       } catch {
         return require("../assets/images/icon.png");
       }

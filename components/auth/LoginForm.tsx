@@ -23,6 +23,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { signIn, signUp, confirmSignUp, resendSignUpCode, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import { Ionicons } from '@expo/vector-icons';
 // Removed Picker; birthday uses a single masked input now
+import { usePoppinsFonts } from '../FontProvider';
 
 type AuthMode = 'signIn' | 'signUp' | 'confirmSignUp' | 'forgotPassword' | 'confirmReset';
 
@@ -49,6 +50,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const isDark = colorScheme === 'dark';
   const bottomSheetHeight = Math.round(Dimensions.get('window').height * 0.680);
   const heroHeight = Math.max(220, Math.round(Dimensions.get('window').height - bottomSheetHeight));
+
+  const { fontsLoaded, fonts } = usePoppinsFonts();
+  const FF_REG = fontsLoaded ? fonts.REGULAR : undefined;
+  const FF_MED = fontsLoaded ? fonts.MEDIUM : undefined;
+  const FF_SEMI = fontsLoaded ? fonts.SEMIBOLD : undefined;
+  const FF_BOLD = fontsLoaded ? fonts.BOLD : undefined;
+  const S_REG = FF_REG ? { fontFamily: FF_REG } : undefined;
+  const S_MED = FF_MED ? { fontFamily: FF_MED } : undefined;
+  const S_SEMI = FF_SEMI ? { fontFamily: FF_SEMI } : undefined;
+  const S_BOLD = FF_BOLD ? { fontFamily: FF_BOLD } : undefined;
 
   // Age requirements by country based on GDPR Article 8
   // Most social apps follow these requirements for compliance
@@ -116,13 +127,25 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   };
 
   const parseBirthday = (value: string) => {
-    const [mm, dd, yyyy] = value.split('/');
-    if (mm?.length !== 2 || dd?.length !== 2 || yyyy?.length !== 4) return null;
-    const month = parseInt(mm, 10);
-    const day = parseInt(dd, 10);
+    const parts = value.split('/');
+    if (parts.length !== 3) return null;
+    const [p1, p2, yyyy] = parts;
+    if (p1?.length !== 2 || p2?.length !== 2 || yyyy?.length !== 4) return null;
+
+    let month = parseInt(p1, 10);
+    let day = parseInt(p2, 10);
     const year = parseInt(yyyy, 10);
+
+    // If the first part is > 12, the user likely entered DD/MM/YYYY → swap
+    if (month > 12 && day <= 12) {
+      const swap = month;
+      month = day;
+      day = swap;
+    }
+
     // Basic range checks
-    if (year < new Date().getFullYear() - 100 || year > new Date().getFullYear()) return null;
+    const currentYear = new Date().getFullYear();
+    if (year < currentYear - 100 || year > currentYear) return null;
     if (month < 1 || month > 12) return null;
     const maxDay = new Date(year, month, 0).getDate();
     if (day < 1 || day > maxDay) return null;
@@ -185,7 +208,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         try {
           return isDark
             ? require("../../assets/images/splash-icon-dark.png")
-            : require("../../assets/images/splash-icon-light.png");
+            : require("../../assets/images/icon_copy.png");
         } catch {
           return require("../../assets/images/icon.png");
         }
@@ -225,7 +248,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   };
 
   const handleSignUp = async () => {
-    if (!username || !email || !password || !confirmPassword) {
+    if (!username || !email || !password) {
       setError('Please fill in all fields');
       return;
     }
@@ -480,7 +503,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         />
         <VStack paddingBottom={50} space="sm">
           <ExpoImage
-            source={require("../../assets/images/icon copy.png")}
+            source={require("../../assets/images/icon_copy.png")}
             style={{ width: 160, height: 80 }}
             contentFit="cover"
           />
@@ -545,6 +568,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       size="2xl"
                       color={isDark ? "#fff" : "#000"}
                       textAlign="center"
+                      style={S_BOLD}
                     >
                       Create{"  "}
                     </Text>
@@ -552,6 +576,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       size="2xl"
                       color={"blue"}
                       textAlign="center"
+                      style={S_BOLD}
                     >
                       Account
                     </Text>
@@ -569,6 +594,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       size="2xl"
                       color={isDark ? "#fff" : "#000"}
                       textAlign="center"
+                      style={S_BOLD}
                     >
                       Welcome to{"  "}
                     </Text>
@@ -576,6 +602,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       size="2xl"
                       color={"blue"}
                       textAlign="center"
+                      style={S_BOLD}
                     >
                       PhomoCam
                     </Text>
@@ -586,6 +613,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                     fontWeight="$bold"
                     color={isDark ? "#fff" : "#000"}
                     textAlign="center"
+                    style={S_BOLD}
                   >
                     {getTitle()}
                   </Heading>
@@ -594,6 +622,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   size="md"
                   color={isDark ? "#999" : "#666"}
                   textAlign="center"
+                  style={S_REG}
                 >
                   {getSubtitle()}
                 </Text>
@@ -610,7 +639,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 {/* Username field for sign in and forgot password */}
                 {(mode === 'signIn' || mode === 'forgotPassword') && (
                   <VStack space="xs">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       Username
                     </Text>
                     <Input
@@ -644,7 +673,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 {/* Username field for sign up */}
                 {mode === 'signUp' && (
                   <VStack space="xs">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       Username
                     </Text>
                     <Input
@@ -677,7 +706,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                 {mode === 'signUp' && (
                   <VStack space="xs">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       Email
                     </Text>
                     <Input
@@ -711,7 +740,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                 {(mode === 'signIn' || mode === 'signUp') && (
                   <VStack space="xs">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       Password
                     </Text>
                     <Input
@@ -761,7 +790,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                           setError(null);
                         }}
                       >
-                        <Text size="sm" color="#007AFF">
+                        <Text size="sm" color="#007AFF" style={S_MED}>
                           Forgot password?
                         </Text>
                       </Pressable>
@@ -772,7 +801,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                 {mode === 'confirmReset' && (
                   <VStack space="xs">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       New Password
                     </Text>
                     <Input
@@ -817,7 +846,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                 {mode === 'confirmReset' && password.length > 0 && (
                   <VStack space="xs">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       Confirm New Password
                     </Text>
                     <Input
@@ -860,7 +889,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 {/* Birthday text input for sign up */}
                 {mode === 'signUp' && (
                   <VStack space="sm">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       Birthday
                     </Text>
                     <Input
@@ -877,7 +906,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                         )} />
                       </InputSlot>
                       <InputField
-                        placeholder="MM/DD/YYYY"
+                        placeholder="MM/DD/YYYY or DD/MM/YYYY"
                         value={birthday}
                         onChangeText={(text) => setBirthday(formatBirthdayInput(text))}
                         keyboardType="number-pad"
@@ -886,7 +915,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                         maxLength={10}
                       />
                     </Input>
-                    <Text size="xs" color={isDark ? "#666" : "#999"}>
+                    <Text size="xs" color={isDark ? "#666" : "#999"} style={S_REG}>
                       You must be at least {getMinAge()} years old to sign up
                     </Text>
                   </VStack>
@@ -894,7 +923,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
                 {(mode === 'confirmSignUp' || mode === 'confirmReset') && (
                   <VStack space="xs">
-                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium" style={S_MED}>
                       Verification Code
                     </Text>
                     <Input
@@ -967,7 +996,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                       opacity={disabled ? 0.6 : 1}
                     >
                       <HStack alignItems="center" space="sm">
-                        <ButtonText color="$white" fontWeight="$semibold">
+                        <ButtonText color="$white" fontWeight="$semibold" style={S_SEMI}>
                           {isLoading ? 'Loading...' :
                             mode === 'signIn' ? 'Sign In' :
                               mode === 'signUp' ? 'Create Account' :

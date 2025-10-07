@@ -9,13 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon-light.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff",
+      "image": "./assets/images/splash-gradient.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#0C0C0C",
       "dark": {
-        "image": "./assets/images/splash-icon-dark.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#000000"
+        "image": "./assets/images/splash-gradient-dark.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#0C0C0C"
       }
     },
     "ios": {
@@ -23,13 +23,13 @@
       "bundleIdentifier": "com.prasiddha123.Phomo",
       "userInterfaceStyle": "automatic",
       "splash": {
-        "image": "./assets/images/splash-icon-light.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#ffffff",
+        "image": "./assets/images/splash-gradient.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#0C0C0C",
         "dark": {
-          "image": "./assets/images/splash-icon-dark.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#000000"
+          "image": "./assets/images/splash-gradient-dark.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#0C0C0C"
         }
       },
       "associatedDomains": [
@@ -55,13 +55,13 @@
         "backgroundColor": "#ffffff"
       },
       "splash": {
-        "image": "./assets/images/splash-icon-light.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#ffffff",
+        "image": "./assets/images/splash-gradient.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#0C0C0C",
         "dark": {
-          "image": "./assets/images/splash-icon-dark.png",
-          "resizeMode": "contain",
-          "backgroundColor": "#000000"
+          "image": "./assets/images/splash-gradient-dark.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#0C0C0C"
         }
       },
       "edgeToEdgeEnabled": true,
@@ -79,7 +79,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png",
       "splash": {
-        "image": "./assets/images/splash-icon-light.png",
+        "image": "./assets/images/icon_copy.png",
         "resizeMode": "contain",
         "backgroundColor": "#ffffff"
       }
