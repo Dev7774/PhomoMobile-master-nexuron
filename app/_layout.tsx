@@ -36,7 +36,7 @@ import {
 import { gluestackUIConfig } from '../gluestack-ui.config';
 
 import { Amplify } from "aws-amplify";
-import amplifyconfig from "../src/amplifyconfiguration.json";
+import amplifyconfig from "../amplifyconfiguration.json";
 
 // Custom header component for onboarding screens with progress bar
 const OnboardingHeader = ({ title, progress }: { title: string; progress: number }) => {

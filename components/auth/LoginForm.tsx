@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useColorScheme, Platform, KeyboardAvoidingView, ScrollView, NativeModules } from 'react-native';
+import { useColorScheme, Platform, KeyboardAvoidingView, ScrollView, NativeModules, Dimensions, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   VStack,
@@ -22,7 +22,7 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 import { signIn, signUp, confirmSignUp, resendSignUpCode, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import { Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
+// Removed Picker; birthday uses a single masked input now
 
 type AuthMode = 'signIn' | 'signUp' | 'confirmSignUp' | 'forgotPassword' | 'confirmReset';
 
@@ -41,14 +41,14 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  // Birthday state for signUp
-  const [birthMonth, setBirthMonth] = useState('');
-  const [birthDay, setBirthDay] = useState('');
-  const [birthYear, setBirthYear] = useState('');
-  
+
+  // Birthday MM/DD/YYYY masked input
+  const [birthday, setBirthday] = useState('');
+
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const bottomSheetHeight = Math.round(Dimensions.get('window').height * 0.680);
+  const heroHeight = Math.max(220, Math.round(Dimensions.get('window').height - bottomSheetHeight));
 
   // Age requirements by country based on GDPR Article 8
   // Most social apps follow these requirements for compliance
@@ -65,13 +65,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     'RO': 16, // Romania
     'MT': 16, // Malta
     'SI': 16, // Slovenia
-    
+
     // 15 years
     'FR': 15, // France
     'GR': 15, // Greece
     'PT': 15, // Portugal
     'CZ': 15, // Czech Republic
-    
+
     // 14 years
     'AT': 14, // Austria
     'BG': 14, // Bulgaria
@@ -79,7 +79,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     'IT': 14, // Italy
     'EE': 14, // Estonia
     'FI': 14, // Finland
-    
+
     // 13 years (minimum allowed)
     'DK': 13, // Denmark
     'IE': 13, // Ireland
@@ -90,17 +90,17 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     'BE': 13, // Belgium
     'GB': 13, // United Kingdom
   };
-  
+
   const getMinAge = () => {
     try {
       // Try to get device locale
-      const deviceLocale = Platform.OS === 'ios' 
+      const deviceLocale = Platform.OS === 'ios'
         ? NativeModules.SettingsManager?.settings?.AppleLocale ||
-          NativeModules.SettingsManager?.settings?.AppleLanguages[0]
+        NativeModules.SettingsManager?.settings?.AppleLanguages[0]
         : NativeModules.I18nManager?.localeIdentifier;
-      
+
       const countryCode = deviceLocale?.split('_')[1] || deviceLocale?.split('-')[1];
-      
+
       // Return age requirement for country, default to 13 if not found
       return ageRequirements[countryCode || ''] || 13;
     } catch {
@@ -108,98 +108,40 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     }
   };
 
-  // Get current date for validation
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth() + 1; // getMonth() returns 0-11
-  const currentDay = today.getDate();
-  
-  // Generate year options (last 100 years)
-  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
-  
-  // Generate month options - only show months up to current month for current year
-  const getAllMonths = () => [
-    { label: 'Jan', value: '1' },
-    { label: 'Feb', value: '2' },
-    { label: 'Mar', value: '3' },
-    { label: 'Apr', value: '4' },
-    { label: 'May', value: '5' },
-    { label: 'Jun', value: '6' },
-    { label: 'Jul', value: '7' },
-    { label: 'Aug', value: '8' },
-    { label: 'Sep', value: '9' },
-    { label: 'Oct', value: '10' },
-    { label: 'Nov', value: '11' },
-    { label: 'Dec', value: '12' },
-  ];
-  
-  const months = getAllMonths().filter(month => {
-    if (!birthYear) {
-      return parseInt(month.value) <= currentMonth; // When no year selected, only show months up to current month
-    }
-    if (parseInt(birthYear) < currentYear) {
-      return true; // Show all months for past years
-    }
-    if (parseInt(birthYear) === currentYear) {
-      return parseInt(month.value) <= currentMonth; // Only show months up to current month for current year
-    }
-    return false; // Don't show any months for future years
-  });
-  
-  // Generate day options based on selected month/year
-  const getDaysInMonth = (month: string, year: string) => {
-    if (!month || !year) return 31;
-    return new Date(parseInt(year), parseInt(month), 0).getDate();
+  // Birthday helpers: input mask + validation
+  const formatBirthdayInput = (text: string) => {
+    const digits = text.replace(/[^0-9]/g, '').slice(0, 8);
+    const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean);
+    return parts.join('/');
   };
-  
-  const getAllDaysInMonth = () => Array.from(
-    { length: getDaysInMonth(birthMonth, birthYear) },
-    (_, i) => i + 1
-  );
-  
-  const days = getAllDaysInMonth().filter(day => {
-    if (!birthYear && !birthMonth) {
-      return day <= currentDay; // When nothing selected, only show days up to today
-    }
-    if (!birthYear || !birthMonth) {
-      // If only one is missing, be conservative and limit to current day
-      return day <= currentDay;
-    }
-    
-    const selectedYear = parseInt(birthYear);
-    const selectedMonth = parseInt(birthMonth);
-    
-    if (selectedYear < currentYear) {
-      return true; // Show all days for past years
-    }
-    if (selectedYear === currentYear && selectedMonth < currentMonth) {
-      return true; // Show all days for past months in current year
-    }
-    if (selectedYear === currentYear && selectedMonth === currentMonth) {
-      return day <= currentDay; // Only show days up to today for current month/year
-    }
-    return false; // Don't show any days for future dates
-  });
 
-  // Clear invalid selections when date constraints change
-  useEffect(() => {
-    if (!birthYear) return;
-    
-    const selectedYear = parseInt(birthYear);
-    const selectedMonth = parseInt(birthMonth);
-    const selectedDay = parseInt(birthDay);
-    
-    // Clear month if it's now invalid
-    if (birthMonth && selectedYear === currentYear && selectedMonth > currentMonth) {
-      setBirthMonth('');
-      setBirthDay('');
-    }
-    
-    // Clear day if it's now invalid
-    if (birthDay && selectedYear === currentYear && selectedMonth === currentMonth && selectedDay > currentDay) {
-      setBirthDay('');
-    }
-  }, [birthYear, birthMonth, birthDay, currentYear, currentMonth, currentDay]);
+  const parseBirthday = (value: string) => {
+    const [mm, dd, yyyy] = value.split('/');
+    if (mm?.length !== 2 || dd?.length !== 2 || yyyy?.length !== 4) return null;
+    const month = parseInt(mm, 10);
+    const day = parseInt(dd, 10);
+    const year = parseInt(yyyy, 10);
+    // Basic range checks
+    if (year < new Date().getFullYear() - 100 || year > new Date().getFullYear()) return null;
+    if (month < 1 || month > 12) return null;
+    const maxDay = new Date(year, month, 0).getDate();
+    if (day < 1 || day > maxDay) return null;
+    const date = new Date(year, month - 1, day);
+    // Prevent future dates
+    if (date > new Date()) return null;
+    return date;
+  };
+
+  const isOfMinAge = (value: string) => {
+    const date = parseBirthday(value);
+    if (!date) return false;
+    const minAge = getMinAge();
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) age--;
+    return age >= minAge;
+  };
 
   useEffect(() => {
     const checkLoginFlags = async () => {
@@ -207,7 +149,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         const cameFromSignOut = await AsyncStorage.getItem('cameFromSignOut');
         const cameFromInvite = await AsyncStorage.getItem('cameFromInvite');
         const cameFromAccountDeletion = await AsyncStorage.getItem('cameFromAccountDeletion');
-        
+
         if (cameFromAccountDeletion === 'true') {
           setMode('signUp'); // Account deleted - show sign up
           // Clear the flag immediately after reading
@@ -241,7 +183,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       case 'ios':
       default:
         try {
-          return isDark 
+          return isDark
             ? require("../../assets/images/splash-icon-dark.png")
             : require("../../assets/images/splash-icon-light.png");
         } catch {
@@ -295,23 +237,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       return;
     }
 
-    if (!birthMonth || !birthDay || !birthYear) {
-      setError('Please select your birthday');
+    if (!birthday) {
+      setError('Please enter your birthday');
       return;
     }
 
-    // Age validation
-    const birthDate = new Date(parseInt(birthYear), parseInt(birthMonth) - 1, parseInt(birthDay));
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-
-    const minAge = getMinAge();
-    if (age < minAge) {
+    if (!isOfMinAge(birthday)) {
+      const minAge = getMinAge();
       setError(`You must be at least ${minAge} years old to create an account`);
       return;
     }
@@ -321,15 +253,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
       return;
     }
+    // Confirm password is no longer shown for sign up; keep server-side policies only
 
     setIsLoading(true);
     setError(null);
@@ -444,7 +372,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         code: error.code,
         statusCode: error.statusCode
       });
-      
+
       if (error.name === 'UserNotFoundException') {
         setError('No account found with this username');
       } else if (error.name === 'InvalidParameterException') {
@@ -543,466 +471,615 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   };
 
   return (
-    <Box flex={1} bg={isDark ? "#000" : "#fff"}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView 
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+    <Box flex={1} bg={isDark ? "#0a0a0a" : "#f2f2f2"}>
+      <Box height={heroHeight} alignItems="center" justifyContent="center">
+        <ExpoImage
+          source={require("../../assets/images/loginbg.png")}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
+          contentFit="cover"
+        />
+        <VStack paddingBottom={50} space="sm">
+          <ExpoImage
+            source={require("../../assets/images/icon copy.png")}
+            style={{ width: 160, height: 80 }}
+            contentFit="cover"
+          />
+
+        </VStack>
+        <Box
+          position="absolute"
+          bottom={0}
+          width="89%"
+          height="32%"
+          borderRadius={40}
+          overflow="hidden" // ✅ ensures rounded corners apply to content
         >
-          <VStack space="xl" flex={1} justifyContent="center" px="$6" py="$8">
-        {/* Logo Section */}
-        <VStack space="lg" alignItems="center">
-          <Box
-            width={100}
-            height={100}
-            borderRadius={Platform.OS === 'android' ? "$full" : "$2xl"}
-            overflow="hidden"
-            shadowColor="$shadowColor"
-            shadowOffset={{ width: 0, height: 8 }}
-            shadowOpacity={0.25}
-            shadowRadius={16}
-            bg={Platform.OS === 'web' ? "transparent" : undefined}
-          >
-            <ExpoImage
-              source={getSplashIcon(isDark)}
-              style={{
-                width: "100%",
-                height: "100%",
-              }}
-              contentFit={Platform.OS === 'android' ? "cover" : "contain"}
-            />
-          </Box>
-          
-          <Heading 
-            size="2xl" 
-            fontWeight="$bold" 
-            color={isDark ? "#fff" : "#000"}
-            textAlign="center"
-          >
-            {getTitle()}
-          </Heading>
-          
-          <Text 
-            size="md" 
-            color={isDark ? "#999" : "#666"}
-            textAlign="center"
-          >
-            {getSubtitle()}
-          </Text>
-        </VStack>
-
-        {error && (
-          <Alert action="error" variant="solid">
-            <AlertIcon as={InfoIcon} mr="$3" />
-            <AlertText>{error}</AlertText>
-          </Alert>
-        )}
-
-        <VStack space="md">
-          {/* Username field for sign in and forgot password */}
-          {(mode === 'signIn' || mode === 'forgotPassword') && (
-            <Input
-              variant="outline"
-              size="lg"
-              bg={isDark ? "#1a1a1a" : "#f8f8f8"}
-              borderColor={isDark ? "#333" : "#e5e5e5"}
-            >
-              <InputField
-                placeholder="Username"
-                value={username}
-                onChangeText={(text) => setUsername(text.toLowerCase().replace(/\s/g, ''))}
-                autoCapitalize="none"
-                autoCorrect={false}
-                color={isDark ? "#fff" : "#000"}
-                placeholderTextColor={isDark ? "#666" : "#999"}
-              />
-            </Input>
-          )}
-
-          {/* Username field for sign up */}
-          {mode === 'signUp' && (
-            <Input
-              variant="outline"
-              size="lg"
-              bg={isDark ? "#1a1a1a" : "#f8f8f8"}
-              borderColor={isDark ? "#333" : "#e5e5e5"}
-            >
-              <InputField
-                placeholder="Username"
-                value={username}
-                onChangeText={(text) => setUsername(text.toLowerCase().replace(/\s/g, ''))}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="username-new"
-                textContentType="username"
-                color={isDark ? "#fff" : "#000"}
-                placeholderTextColor={isDark ? "#666" : "#999"}
-              />
-            </Input>
-          )}
-
-          {(mode === 'signIn' || mode === 'signUp') && (
-            <Input
-              variant="outline"
-              size="lg"
-              bg={isDark ? "#1a1a1a" : "#f8f8f8"}
-              borderColor={isDark ? "#333" : "#e5e5e5"}
-            >
-              <InputField
-                placeholder="Password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (mode === 'signUp' && text.length === 0) {
-                    setConfirmPassword('');
-                    setShowConfirmPassword(false);
-                  }
-                }}
-                secureTextEntry={!showPassword}
-                autoComplete={mode === 'signUp' ? "new-password" : "current-password"}
-                textContentType="password"
-                color={isDark ? "#fff" : "#000"}
-                placeholderTextColor={isDark ? "#666" : "#999"}
-              />
-              <InputSlot pr="$3" onPress={() => setShowPassword((prev) => !prev)}>
-                <InputIcon as={() => (
-                  <Ionicons
-                    name={showPassword ? "eye" : "eye-off"}
-                    size={20}
-                    color="#007AFF"
-                  />
-                )} />
-              </InputSlot>
-            </Input>
-          )}
-
-          {mode === 'confirmReset' && (
-            <Input
-              variant="outline"
-              size="lg"
-              bg={isDark ? "#1a1a1a" : "#f8f8f8"}
-              borderColor={isDark ? "#333" : "#e5e5e5"}
-            >
-              <InputField
-                placeholder="New Password"
-                value={password}
-                onChangeText={(text) => {
-                  setPassword(text);
-                  if (text.length === 0) {
-                    setConfirmPassword('');
-                    setShowConfirmPassword(false);
-                  }
-                }}
-                secureTextEntry={!showPassword}
-                color={isDark ? "#fff" : "#000"}
-                placeholderTextColor={isDark ? "#666" : "#999"}
-              />
-              <InputSlot pr="$3" onPress={() => setShowPassword((prev) => !prev)}>
-                <InputIcon as={() => (
-                  <Ionicons
-                    name={showPassword ? "eye" : "eye-off"}
-                    size={20}
-                    color="#007AFF"
-                  />
-                )} />
-              </InputSlot>
-            </Input>
-          )}
-
-          {(mode === 'signUp' || mode === 'confirmReset') && password.length > 0 && (
-            <Input
-              variant="outline"
-              size="lg"
-              bg={isDark ? "#1a1a1a" : "#f8f8f8"}
-              borderColor={isDark ? "#333" : "#e5e5e5"}
-            >
-              <InputField
-                placeholder={mode === 'confirmReset' ? "Confirm New Password" : "Confirm Password"}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showConfirmPassword}
-                color={isDark ? "#fff" : "#000"}
-                placeholderTextColor={isDark ? "#666" : "#999"}
-              />
-              <InputSlot pr="$3" onPress={() => setShowConfirmPassword((prev) => !prev)}>
-                <InputIcon as={() => (
-                  <Ionicons
-                    name={showConfirmPassword ? "eye" : "eye-off"}
-                    size={20}
-                    color="#007AFF"
-                  />
-                )} />
-              </InputSlot>
-            </Input>
-          )}
-
-          {/* Email field for sign up */}
-          {mode === 'signUp' && (
-            <Input
-              variant="outline"
-              size="lg"
-              bg={isDark ? "#1a1a1a" : "#f8f8f8"}
-              borderColor={isDark ? "#333" : "#e5e5e5"}
-            >
-              <InputField
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                textContentType="emailAddress"
-                color={isDark ? "#fff" : "#000"}
-                placeholderTextColor={isDark ? "#666" : "#999"}
-              />
-            </Input>
-          )}
-
-          {/* Birthday pickers for sign up */}
-          {mode === 'signUp' && (
-            <VStack space="sm">
-              <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
-                Birthday (MM/DD/YYYY)
-              </Text>
-              <HStack space="sm" alignItems="center">
-                {/* Month Picker */}
-                <Box flex={1} borderRadius="$lg" bg={isDark ? "#1a1a1a" : "#f8f8f8"} borderColor={isDark ? "#333" : "#e5e5e5"} borderWidth={1}>
-                  <Picker
-                    selectedValue={birthMonth}
-                    onValueChange={setBirthMonth}
-                    style={{ 
-                      height: Platform.OS === 'ios' ? 100 : 50,
-                      color: isDark ? "#fff" : "#000",
-                    }}
-                    itemStyle={{ 
-                      height: Platform.OS === 'ios' ? 100 : undefined,
-                      color: isDark ? "#fff" : "#000",
-                      fontSize: 12
-                    }}
-                  >
-                    <Picker.Item 
-                      label="Month" 
-                      value="" 
-                      color={isDark ? "#666" : "#999"}
-                    />
-                    {months.map((month) => (
-                      <Picker.Item 
-                        key={month.value} 
-                        label={month.label} 
-                        value={month.value}
-                        color={isDark ? "#fff" : "#000"}
-                      />
-                    ))}
-                  </Picker>
-                </Box>
-
-                {/* Day Picker */}
-                <Box flex={1} borderRadius="$lg" bg={isDark ? "#1a1a1a" : "#f8f8f8"} borderColor={isDark ? "#333" : "#e5e5e5"} borderWidth={1}>
-                  <Picker
-                    selectedValue={birthDay}
-                    onValueChange={setBirthDay}
-                    style={{ 
-                      height: Platform.OS === 'ios' ? 100 : 50,
-                      color: isDark ? "#fff" : "#000",
-                    }}
-                    itemStyle={{ 
-                      height: Platform.OS === 'ios' ? 100 : undefined,
-                      color: isDark ? "#fff" : "#000",
-                      fontSize: 14
-                    }}
-                  >
-                    <Picker.Item 
-                      label="Day" 
-                      value="" 
-                      color={isDark ? "#666" : "#999"}
-                    />
-                    {days.map((day) => (
-                      <Picker.Item 
-                        key={day} 
-                        label={day.toString()} 
-                        value={day.toString()}
-                        color={isDark ? "#fff" : "#000"}
-                      />
-                    ))}
-                  </Picker>
-                </Box>
-
-                {/* Year Picker */}
-                <Box flex={1.2} borderRadius="$lg" bg={isDark ? "#1a1a1a" : "#f8f8f8"} borderColor={isDark ? "#333" : "#e5e5e5"} borderWidth={1}>
-                  <Picker
-                    selectedValue={birthYear}
-                    onValueChange={setBirthYear}
-                    style={{ 
-                      height: Platform.OS === 'ios' ? 100 : 50,
-                      color: isDark ? "#fff" : "#000",
-                    }}
-                    itemStyle={{ 
-                      height: Platform.OS === 'ios' ? 100 : undefined,
-                      color: isDark ? "#fff" : "#000",
-                      fontSize: 14
-                    }}
-                  >
-                    <Picker.Item 
-                      label="Year" 
-                      value="" 
-                      color={isDark ? "#666" : "#999"}
-                    />
-                    {years.map((year) => (
-                      <Picker.Item 
-                        key={year} 
-                        label={year.toString()} 
-                        value={year.toString()}
-                        color={isDark ? "#fff" : "#000"}
-                      />
-                    ))}
-                  </Picker>
-                </Box>
-              </HStack>
-              <Text size="xs" color={isDark ? "#666" : "#999"}>
-                You must be at least {getMinAge()} years old to sign up
-              </Text>
-            </VStack>
-          )}
-
-          {(mode === 'confirmSignUp' || mode === 'confirmReset') && (
-            <Input
-              variant="outline"
-              size="lg"
-              bg={isDark ? "#1a1a1a" : "#f8f8f8"}
-              borderColor={isDark ? "#333" : "#e5e5e5"}
-            >
-              <InputField
-                placeholder="6-digit verification code"
-                value={verificationCode}
-                onChangeText={(text) => {
-                  // Only allow numbers and limit to 6 digits
-                  const numericText = text.replace(/[^0-9]/g, '').slice(0, 6);
-                  setVerificationCode(numericText);
-                }}
-                keyboardType="number-pad"
-                maxLength={6}
-                color={isDark ? "#fff" : "#000"}
-                placeholderTextColor={isDark ? "#666" : "#999"}
-              />
-            </Input>
-          )}
-
-          <Button
-            size="lg"
-            bg={isDark ? "#007AFF" : "#007AFF"}
-            borderRadius="$lg"
-            shadowColor="$black"
-            shadowOffset={{ width: 0, height: 4 }}
-            shadowOpacity={0.25}
-            shadowRadius={8}
-            onPress={() => {
-              switch (mode) {
-                case 'signIn':
-                  handleSignIn();
-                  break;
-                case 'signUp':
-                  handleSignUp();
-                  break;
-                case 'confirmSignUp':
-                  handleConfirmSignUp();
-                  break;
-                case 'forgotPassword':
-                  handleForgotPassword();
-                  break;
-                case 'confirmReset':
-                  handleConfirmReset();
-                  break;
-              }
+          <ExpoImage
+            source={require("../../assets/images/shadow.png")}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              width: '100%',
+              height: '100%',
+              borderRadius: 40, // optional for extra safety
             }}
-            isDisabled={isLoading}
-            opacity={isLoading ? 0.6 : 1}
+            contentFit="cover"
+          />
+        </Box>
+
+      </Box>
+      {/* Bottom Sheet container */}
+      <Box
+        position="absolute"
+        bottom={0}
+        left={0}
+        right={0}
+        height={bottomSheetHeight}
+        bg={isDark ? "#000" : "#fff"}
+        borderTopLeftRadius={Platform.OS === 'android' ? 40 : 40}
+        borderTopRightRadius={Platform.OS === 'android' ? 40 : 40}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <ButtonText color="$white" fontWeight="$semibold">
-              {isLoading ? 'Loading...' : 
-               mode === 'signIn' ? 'Sign In' :
-               mode === 'signUp' ? 'Create Account' :
-               mode === 'confirmSignUp' ? 'Verify' :
-               mode === 'forgotPassword' ? 'Send Reset Code' :
-               mode === 'confirmReset' ? 'Reset Password' : 'Continue'}
-            </ButtonText>
-          </Button>
+            <VStack space="xl" flex={1} px="$6" py="$4">
+              {/* Logo Section */}
+              <VStack space="lg" alignItems="center">
 
-          {mode === 'confirmSignUp' && (
-            <Button 
-              variant="link" 
-              onPress={handleResendCode} 
-              isDisabled={isLoading}
-              opacity={isLoading ? 0.6 : 1}
-            >
-              <ButtonText color={isDark ? "#007AFF" : "#007AFF"}>
-                Resend verification code
-              </ButtonText>
-            </Button>
-          )}
-        </VStack>
-
-        <VStack space="sm" alignItems="center">
-          {mode === 'signIn' && (
-            <>
-              <Pressable onPress={() => {
-                setMode('signUp');
-                setUsername('');
-                setPassword('');
-                setError(null);
-              }}>
-                <Text size="sm" color={isDark ? "#007AFF" : "#007AFF"}>
-                  Don't have an account? Sign up
+                {getTitle() === "Create Account" ? (
+                  <Box
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                      flexDirection: "row",
+                    }}
+                  >
+                    <Text
+                      size="2xl"
+                      color={isDark ? "#fff" : "#000"}
+                      textAlign="center"
+                    >
+                      Create{"  "}
+                    </Text>
+                    <Text
+                      size="2xl"
+                      color={"blue"}
+                      textAlign="center"
+                    >
+                      Account
+                    </Text>
+                  </Box>
+                ) : getTitle() === "Welcome to PhomoCam" ? (
+                  <Box
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                      flexDirection: "row",
+                    }}
+                  >
+                    <Text
+                      size="2xl"
+                      color={isDark ? "#fff" : "#000"}
+                      textAlign="center"
+                    >
+                      Welcome to{"  "}
+                    </Text>
+                    <Text
+                      size="2xl"
+                      color={"blue"}
+                      textAlign="center"
+                    >
+                      PhomoCam
+                    </Text>
+                  </Box>
+                ) : (
+                  <Heading
+                    size="2xl"
+                    fontWeight="$bold"
+                    color={isDark ? "#fff" : "#000"}
+                    textAlign="center"
+                  >
+                    {getTitle()}
+                  </Heading>
+                )}
+                <Text
+                  size="md"
+                  color={isDark ? "#999" : "#666"}
+                  textAlign="center"
+                >
+                  {getSubtitle()}
                 </Text>
-              </Pressable>
-              <Pressable onPress={() => {
-                setMode('forgotPassword');
-                setPassword('');
-                setError(null);
-              }}>
-                <Text size="sm" color={isDark ? "#007AFF" : "#007AFF"}>
-                  Forgot password?
-                </Text>
-              </Pressable>
-            </>
-          )}
+              </VStack>
 
-          {mode === 'signUp' && (
-            <Pressable onPress={() => {
-              setMode('signIn');
-              setUsername('');
-              setEmail('');
-              setPassword('');
-              setConfirmPassword('');
-              setError(null);
-            }}>
-              <Text size="sm" color={isDark ? "#007AFF" : "#007AFF"}>
-                Already have an account? Sign in
-              </Text>
-            </Pressable>
-          )}
+              {error && (
+                <Alert action="error" variant="solid">
+                  <AlertIcon as={InfoIcon} mr="$3" />
+                  <AlertText>{error}</AlertText>
+                </Alert>
+              )}
 
-          {(mode === 'confirmSignUp' || mode === 'forgotPassword' || mode === 'confirmReset') && (
-            <Pressable onPress={() => {
-              setMode('signIn');
-              setVerificationCode('');
-              setPassword('');
-              setConfirmPassword('');
-              setError(null);
-            }}>
-              <Text size="sm" color={isDark ? "#007AFF" : "#007AFF"}>
-                Back to sign in
-              </Text>
-            </Pressable>
-          )}
-        </VStack>
-          </VStack>
-        </ScrollView>
-      </KeyboardAvoidingView>
+              <VStack space="md">
+                {/* Username field for sign in and forgot password */}
+                {(mode === 'signIn' || mode === 'forgotPassword') && (
+                  <VStack space="xs">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      Username
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg="transparent"
+                      borderWidth={1.5}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputSlot pl="$3">
+                        <InputIcon as={() => (
+                          <Ionicons name="person-outline" size={20} color={isDark ? "#999" : "#666"} />
+                        )} />
+                      </InputSlot>
+                      <InputField
+                        placeholder="Username"
+                        value={username}
+                        onChangeText={(text) =>
+                          setUsername(text.toLowerCase().replace(/\s/g, ''))
+                        }
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                      />
+                    </Input>
+                  </VStack>
+                )}
+
+                {/* Username field for sign up */}
+                {mode === 'signUp' && (
+                  <VStack space="xs">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      Username
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg={isDark ? "#1a1a1a" : "transparent"}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderWidth={1.5}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputSlot pl="$3">
+                        <InputIcon as={() => (
+                          <Ionicons name="person-outline" size={20} color={isDark ? "#999" : "#666"} />
+                        )} />
+                      </InputSlot>
+                      <InputField
+                        placeholder="Username"
+                        value={username}
+                        onChangeText={(text) => setUsername(text.toLowerCase().replace(/\s/g, ''))}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="username-new"
+                        textContentType="username"
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                      />
+                    </Input>
+                  </VStack>
+                )}
+
+                {mode === 'signUp' && (
+                  <VStack space="xs">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      Email
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg={isDark ? "#1a1a1a" : "transparent"}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderWidth={1.5}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputSlot pl="$3">
+                        <InputIcon as={() => (
+                          <Ionicons name="mail-outline" size={20} color={isDark ? "#999" : "#666"} />
+                        )} />
+                      </InputSlot>
+                      <InputField
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="email"
+                        textContentType="emailAddress"
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                      />
+                    </Input>
+                  </VStack>
+                )}
+
+                {(mode === 'signIn' || mode === 'signUp') && (
+                  <VStack space="xs">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      Password
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg={isDark ? "#1a1a1a" : "transparent"}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderWidth={1.5}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputSlot pl="$3">
+                        <InputIcon as={() => (
+                          <Ionicons name="lock-closed-outline" size={20} color={isDark ? "#999" : "#666"} />
+                        )} />
+                      </InputSlot>
+                      <InputField
+                        placeholder="Password"
+                        value={password}
+                        onChangeText={(text) => {
+                          setPassword(text);
+                        }}
+                        secureTextEntry={!showPassword}
+                        autoComplete={mode === 'signUp' ? "new-password" : "current-password"}
+                        textContentType="password"
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                      />
+                      <InputSlot pr="$3" onPress={() => setShowPassword((prev) => !prev)}>
+                        <InputIcon as={() => (
+                          <Ionicons
+                            name={showPassword ? "eye" : "eye-off"}
+                            size={20}
+                            color="#007AFF"
+                          />
+                        )} />
+                      </InputSlot>
+                    </Input>
+                  </VStack>
+                )}
+                {mode === 'signIn' && (
+                  <>
+                    <Box style={{ width: '100%', alignItems: 'flex-end' }}>
+                      <Pressable
+                        onPress={() => {
+                          setMode('forgotPassword');
+                          setPassword('');
+                          setError(null);
+                        }}
+                      >
+                        <Text size="sm" color="#007AFF">
+                          Forgot password?
+                        </Text>
+                      </Pressable>
+                    </Box>
+
+                  </>
+                )}
+
+                {mode === 'confirmReset' && (
+                  <VStack space="xs">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      New Password
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg={isDark ? "#1a1a1a" : "transparent"}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderWidth={1.5}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputSlot pl="$3">
+                        <InputIcon as={() => (
+                          <Ionicons name="lock-closed-outline" size={20} color={isDark ? "#999" : "#666"} />
+                        )} />
+                      </InputSlot>
+                      <InputField
+                        placeholder="New Password"
+                        value={password}
+                        onChangeText={(text) => {
+                          setPassword(text);
+                          if (text.length === 0) {
+                            setConfirmPassword('');
+                            setShowConfirmPassword(false);
+                          }
+                        }}
+                        secureTextEntry={!showPassword}
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                      />
+                      <InputSlot pr="$3" onPress={() => setShowPassword((prev) => !prev)}>
+                        <InputIcon as={() => (
+                          <Ionicons
+                            name={showPassword ? "eye" : "eye-off"}
+                            size={20}
+                            color="#007AFF"
+                          />
+                        )} />
+                      </InputSlot>
+                    </Input>
+                  </VStack>
+                )}
+
+                {mode === 'confirmReset' && password.length > 0 && (
+                  <VStack space="xs">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      Confirm New Password
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg={isDark ? "#1a1a1a" : "transparent"}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderWidth={1.5}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputSlot pl="$3">
+                        <InputIcon as={() => (
+                          <Ionicons name="lock-closed-outline" size={20} color={isDark ? "#999" : "#666"} />
+                        )} />
+                      </InputSlot>
+                      <InputField
+                        placeholder={"Confirm New Password"}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        secureTextEntry={!showConfirmPassword}
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                      />
+                      <InputSlot pr="$3" onPress={() => setShowConfirmPassword((prev) => !prev)}>
+                        <InputIcon as={() => (
+                          <Ionicons
+                            name={showConfirmPassword ? "eye" : "eye-off"}
+                            size={20}
+                            color="#007AFF"
+                          />
+                        )} />
+                      </InputSlot>
+                    </Input>
+                  </VStack>
+                )}
+
+                {/* Email field for sign up */}
+
+
+                {/* Birthday text input for sign up */}
+                {mode === 'signUp' && (
+                  <VStack space="sm">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      Birthday
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg={isDark ? "#1a1a1a" : "transparent"}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderWidth={1.5}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputSlot pl="$3">
+                        <InputIcon as={() => (
+                          <Ionicons name="calendar-outline" size={20} color={isDark ? "#999" : "#666"} />
+                        )} />
+                      </InputSlot>
+                      <InputField
+                        placeholder="MM/DD/YYYY"
+                        value={birthday}
+                        onChangeText={(text) => setBirthday(formatBirthdayInput(text))}
+                        keyboardType="number-pad"
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                        maxLength={10}
+                      />
+                    </Input>
+                    <Text size="xs" color={isDark ? "#666" : "#999"}>
+                      You must be at least {getMinAge()} years old to sign up
+                    </Text>
+                  </VStack>
+                )}
+
+                {(mode === 'confirmSignUp' || mode === 'confirmReset') && (
+                  <VStack space="xs">
+                    <Text size="sm" color={isDark ? "#999" : "#666"} fontWeight="$medium">
+                      Verification Code
+                    </Text>
+                    <Input
+                      variant="outline"
+                      size="lg"
+                      bg={isDark ? "#1a1a1a" : "transparent"}
+                      borderColor={isDark ? "#333" : "#e5e5e5"}
+                      borderWidth={1.5}
+                      borderRadius={10} // 👈 numeric value works best here
+                    >
+                      <InputField
+                        placeholder="6-digit verification code"
+                        value={verificationCode}
+                        onChangeText={(text) => {
+                          // Only allow numbers and limit to 6 digits
+                          const numericText = text.replace(/[^0-9]/g, '').slice(0, 6);
+                          setVerificationCode(numericText);
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={6}
+                        color={isDark ? "#fff" : "#000"}
+                        placeholderTextColor={isDark ? "#666" : "#999"}
+                      />
+                    </Input>
+                  </VStack>
+                )}
+
+                {(() => {
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  const isValidEmail = (v: string) => emailRegex.test(v);
+                  const isSignInValid = mode === 'signIn' ? (username.length > 0 && password.length > 0) : true;
+                  const isSignUpValid = mode === 'signUp' ? (
+                    username.length >= 4 && isValidEmail(email) && password.length >= 8 && isOfMinAge(birthday)
+                  ) : true;
+                  const isConfirmSignUpValid = mode === 'confirmSignUp' ? (username.length > 0 && verificationCode.length === 6) : true;
+                  const isForgotPasswordValid = mode === 'forgotPassword' ? (username.length > 0) : true;
+                  const isConfirmResetValid = mode === 'confirmReset' ? (
+                    username.length > 0 && verificationCode.length === 6 && password.length >= 8 && password === confirmPassword
+                  ) : true;
+                  const disabled = isLoading || !(isSignInValid && isSignUpValid && isConfirmSignUpValid && isForgotPasswordValid && isConfirmResetValid);
+                  return (
+                    <Button
+                      size="lg"
+                      bg={isDark ? "#007AFF" : "#007AFF"}
+                      borderRadius="$lg"
+                      shadowColor="$black"
+                      shadowOffset={{ width: 0, height: 4 }}
+                      shadowOpacity={0.25}
+                      shadowRadius={8}
+                      onPress={() => {
+                        switch (mode) {
+                          case 'signIn':
+                            handleSignIn();
+                            break;
+                          case 'signUp':
+                            handleSignUp();
+                            break;
+                          case 'confirmSignUp':
+                            handleConfirmSignUp();
+                            break;
+                          case 'forgotPassword':
+                            handleForgotPassword();
+                            break;
+                          case 'confirmReset':
+                            handleConfirmReset();
+                            break;
+                        }
+                      }}
+                      isDisabled={disabled}
+                      opacity={disabled ? 0.6 : 1}
+                    >
+                      <HStack alignItems="center" space="sm">
+                        <ButtonText color="$white" fontWeight="$semibold">
+                          {isLoading ? 'Loading...' :
+                            mode === 'signIn' ? 'Sign In' :
+                              mode === 'signUp' ? 'Create Account' :
+                                mode === 'confirmSignUp' ? 'Verify' :
+                                  mode === 'forgotPassword' ? 'Send Reset Code' :
+                                    mode === 'confirmReset' ? 'Reset Password' : 'Continue'}
+                        </ButtonText>
+                        <ExpoImage
+                          source={require("../../assets/images/arrow-button.png")}
+                          style={{ width: 18, height: 18 }}
+                          contentFit="contain"
+                        />
+                      </HStack>
+                    </Button>
+                  );
+                })()}
+
+                {mode === 'confirmSignUp' && (
+                  <Button
+                    variant="link"
+                    onPress={handleResendCode}
+                    isDisabled={isLoading}
+                    opacity={isLoading ? 0.6 : 1}
+                  >
+                    <ButtonText color={isDark ? "#007AFF" : "#007AFF"}>
+                      Resend verification code
+                    </ButtonText>
+                  </Button>
+                )}
+              </VStack>
+
+              <VStack space="sm" alignItems="center">
+                {mode === 'signIn' && (
+                  <>
+                  <Box
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                      position: "relative",
+                      flexDirection: "row",
+                    }}
+                  >
+                    <Text
+                      color={isDark ? "#007AFF" : "#6C7278"}
+                      textAlign="center"
+                    >
+                      Don't have an account?{"  "}
+                    </Text>
+                    <Pressable onPress={() => {
+                      setMode('signUp');
+                      setUsername('');
+                      setPassword('');
+                      setError(null);
+                    }}>
+                      <Text size="sm" color={isDark ? "#007AFF" : "#007AFF"}>
+                        Sign up
+                      </Text>
+                    </Pressable>
+                  </Box>
+                   
+
+                  </>
+                )}
+
+                {mode === 'signUp' && (
+                  <Box
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                    flexDirection: "row",
+                  }}
+                >
+                  <Text
+                    color={isDark ? "#007AFF" : "#6C7278"}
+                    textAlign="center"
+                  >
+                    Already have an account?{"  "}
+                  </Text>
+                  <Pressable onPress={() => {
+                   setMode('signIn');
+                   setUsername('');
+                   setEmail('');
+                   setPassword('');
+                   setConfirmPassword('');
+                   setError(null);
+                  }}>
+                    <Text size="sm" color={isDark ? "#007AFF" : "#007AFF"}>
+                      Sign in
+                    </Text>
+                  </Pressable>
+                </Box>
+                )}
+
+                {(mode === 'confirmSignUp' || mode === 'forgotPassword' || mode === 'confirmReset') && (
+                  <Pressable onPress={() => {
+                    setMode('signIn');
+                    setVerificationCode('');
+                    setPassword('');
+                    setConfirmPassword('');
+                    setError(null);
+                  }}>
+                    <Text size="sm" color={isDark ? "#007AFF" : "#007AFF"}>
+                      Back to sign in
+                    </Text>
+                  </Pressable>
+                )}
+              </VStack>
+            </VStack>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Box>
     </Box>
   );
 }

@@ -37,6 +37,7 @@
     "expo-image": "~2.3.2",
     "expo-image-manipulator": "~13.1.7",
     "expo-image-picker": "^16.1.4",
+    "expo-linear-gradient": "^15.0.7",
     "expo-linking": "~7.1.7",
     "expo-media-library": "~17.1.7",
     "expo-notifications": "^0.31.4",
